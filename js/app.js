@@ -26,19 +26,38 @@ function setConnected(connected) {
   }
 }
 
+const isBrave = !!navigator.brave;
+const BRAVE_HELP = 'Brave turns Bluetooth off for web pages. Open this page in Chrome instead, or enable brave://flags/#brave-web-bluetooth-api and restart Brave.';
+
+/** Turn the browser's terse Bluetooth errors into something actionable. */
+function explain(err) {
+  const msg = err.message || String(err);
+  if (/globally disabled/i.test(msg)) {
+    return isBrave ? BRAVE_HELP : 'Bluetooth for web pages is turned off in this browser. Open this page in Chrome.';
+  }
+  if (err.name === 'NotFoundError' && /cancel/i.test(msg)) return 'No mask picked. Tap Connect again and choose the MASK device.';
+  if (/adapter not available|bluetooth adapter/i.test(msg)) return 'Bluetooth looks switched off on this device. Turn it on and try again.';
+  return msg;
+}
+
 /** Run an action, logging and showing any error instead of failing silently. */
 async function run(action) {
   try {
     await action();
   } catch (err) {
     log('error', err.message || String(err));
-    setStatus(err.message || String(err), 'error');
+    setStatus(explain(err), 'error');
   }
 }
 
 // --- Connection ---
 
-if (!navigator.bluetooth) $('no-bt').hidden = false;
+if (isBrave) {
+  $('no-bt').textContent = BRAVE_HELP;
+  $('no-bt').hidden = false;
+} else if (!navigator.bluetooth) {
+  $('no-bt').hidden = false;
+}
 setConnected(false);
 
 mask.onDisconnect = () => {
