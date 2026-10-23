@@ -1,8 +1,8 @@
-import { Mask } from './mask.js?v=20261023180057';
-import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023180057';
-import { PictureEditor, loadImageFile } from './picture.js?v=20261023180057';
-import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023180057';
-import { drawShapeGuide } from './shape.js?v=20261023180057';
+import { Mask } from './mask.js?v=20261023180505';
+import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023180505';
+import { PictureEditor, loadImageFile } from './picture.js?v=20261023180505';
+import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023180505';
+import { drawShapeGuide } from './shape.js?v=20261023180505';
 
 const $ = (id) => document.getElementById(id);
 
@@ -57,12 +57,9 @@ async function run(action) {
 
 // --- Connection ---
 
-if (isBrave) {
-  $('no-bt').textContent = BRAVE_HELP;
-  $('no-bt').hidden = false;
-} else if (!navigator.bluetooth) {
-  $('no-bt').hidden = false;
-}
+// Brave only fails when connecting, and explain() covers that, so only warn
+// up front when the browser has no Web Bluetooth at all.
+if (!navigator.bluetooth) $('no-bt').hidden = false;
 
 function setConnected(connected) {
   $('connect').hidden = connected;

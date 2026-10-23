@@ -1,11 +1,58 @@
 // Text rendering, both for the mask's own scrolling text mode and as a still picture.
 
-import { TEXT_HEIGHT, encodeTextBitmap, encodeTextColours } from './protocol.js?v=20261023180057';
+import { TEXT_HEIGHT, encodeTextBitmap, encodeTextColours } from './protocol.js?v=20261023180505';
 
 // Long bitmaps can lock up the mask until its battery is pulled, so stay well clear.
 export const MAX_TEXT_COLUMNS = 512;
 
 const FONT = 'bold 14px system-ui, Roboto, sans-serif';
+const LETTER_GAP = 1;
+const SPACE_WIDTH = 4;
+const ALPHA_THRESHOLD = 110;
+
+/**
+ * Turn text into columns of 16 on/off pixels. Each character is drawn on its
+ * own and trimmed to its lit columns, then joined with a fixed one-column gap:
+ * drawing the whole string at once lets bold letters touch at this size.
+ */
+function textColumns(text) {
+  const scratch = document.createElement('canvas');
+  scratch.width = 40;
+  scratch.height = TEXT_HEIGHT;
+  const ctx = scratch.getContext('2d', { willReadFrequently: true });
+  ctx.font = FONT;
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#fff';
+
+  const columns = [];
+  const blank = () => new Array(TEXT_HEIGHT).fill(false);
+  const chars = [...new Intl.Segmenter().segment(text)].map((s) => s.segment);
+  for (const ch of chars) {
+    if (/^\s+$/.test(ch)) {
+      for (let i = 0; i < SPACE_WIDTH; i++) columns.push(blank());
+      continue;
+    }
+    ctx.clearRect(0, 0, scratch.width, scratch.height);
+    ctx.fillText(ch, 4, 13);
+    const alpha = ctx.getImageData(0, 0, scratch.width, TEXT_HEIGHT).data;
+    const glyph = [];
+    for (let x = 0; x < scratch.width; x++) {
+      const col = blank();
+      for (let y = 0; y < TEXT_HEIGHT; y++) col[y] = alpha[(y * scratch.width + x) * 4 + 3] >= ALPHA_THRESHOLD;
+      glyph.push(col);
+    }
+    const lit = glyph.map((col) => col.some(Boolean));
+    const first = lit.indexOf(true);
+    if (first < 0) continue;
+    const last = lit.lastIndexOf(true);
+    if (columns.length && columns.at(-1).some(Boolean)) {
+      for (let i = 0; i < LETTER_GAP; i++) columns.push(blank());
+    }
+    columns.push(...glyph.slice(first, last + 1));
+  }
+  // A blank column at each end so the text doesn't touch itself when it wraps around.
+  return [blank(), ...columns, blank()];
+}
 
 /**
  * Render text as a 16-pixel-high on/off strip for the mask's text mode.
@@ -13,35 +60,27 @@ const FONT = 'bold 14px system-ui, Roboto, sans-serif';
  * `colourAt(x, width)` gives the [r, g, b] for each column.
  */
 export function renderScrollingText(text, colourAt) {
-  const canvas = document.createElement('canvas');
-  let ctx = canvas.getContext('2d');
-  ctx.font = FONT;
-  const fullWidth = Math.ceil(ctx.measureText(text).width) + 2;
-  const width = Math.max(1, Math.min(fullWidth, MAX_TEXT_COLUMNS));
-  canvas.width = width;
-  canvas.height = TEXT_HEIGHT;
-  ctx = canvas.getContext('2d', { willReadFrequently: true });
-  ctx.font = FONT;
-  ctx.fillStyle = '#fff';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(text, 1, 13);
-
-  const alpha = ctx.getImageData(0, 0, width, TEXT_HEIGHT).data;
-  const isLit = (x, y) => alpha[(y * width + x) * 4 + 3] >= 110;
+  const all = textColumns(text);
+  const columns = all.slice(0, MAX_TEXT_COLUMNS);
+  const width = columns.length;
+  const isLit = (x, y) => columns[x][y];
   const bitmap = encodeTextBitmap(width, isLit);
   const colours = encodeTextColours(width, (x) => colourAt(x, width));
 
-  // Redraw the preview exactly as the mask will show it: lit pixels in their column colour.
+  // Preview exactly as the mask will show it: lit pixels in their column colour.
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = TEXT_HEIGHT;
+  const ctx = canvas.getContext('2d');
   const out = ctx.createImageData(width, TEXT_HEIGHT);
   for (let x = 0; x < width; x++) {
     for (let y = 0; y < TEXT_HEIGHT; y++) {
       if (!isLit(x, y)) continue;
-      const i = (y * width + x) * 4;
-      out.data.set([colours[x * 3], colours[x * 3 + 1], colours[x * 3 + 2], 255], i);
+      out.data.set([colours[x * 3], colours[x * 3 + 1], colours[x * 3 + 2], 255], (y * width + x) * 4);
     }
   }
   ctx.putImageData(out, 0, 0);
-  return { canvas, bitmap, colours, width, truncated: fullWidth > MAX_TEXT_COLUMNS };
+  return { canvas, bitmap, colours, width, truncated: all.length > MAX_TEXT_COLUMNS };
 }
 
 /** A rainbow across the text, one hue step per column. */

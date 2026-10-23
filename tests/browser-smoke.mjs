@@ -77,8 +77,9 @@ await waitShowing('Showing slot 1');
 
 // Scrolling text.
 await page.click('[data-tab=text]');
-await page.fill('#text-input', 'Hello mask!');
+await page.fill('#text-input', 'HELLO Hello mask!');
 await page.check('#text-rainbow');
+await page.waitForTimeout(100);
 await shot('text-scroll');
 await page.click('#text-send');
 await waitShowing('Showing text');
