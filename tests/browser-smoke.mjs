@@ -91,6 +91,24 @@ await shot('text-still');
 await page.click('#still-send');
 await waitShowing('Showing slot 2');
 
+// Faces: pick one, send it, then open another in Draw and add to it.
+await page.click('[data-tab=faces]');
+await page.click('.face:nth-child(2)');
+await shot('faces');
+await page.click('#face-send');
+await waitShowing('Showing slot 4');
+await page.click('.face:nth-child(12)');
+await page.click('#face-edit');
+const pad = await page.locator('#draw-canvas').boundingBox();
+await page.click('.swatch:nth-child(5)');
+await page.mouse.move(pad.x + 30, pad.y + pad.height - 40);
+await page.mouse.down();
+await page.mouse.move(pad.x + pad.width - 30, pad.y + pad.height - 60, { steps: 10 });
+await page.mouse.up();
+await shot('draw');
+await page.click('#draw-send');
+await waitShowing('Showing slot 3');
+
 // Test pattern.
 await page.click('[data-tab=test]');
 await page.selectOption('#pattern', 'corners');
@@ -101,5 +119,5 @@ await waitShowing('Showing slot 34');
 const state = await page.evaluate(() => window.__fakeMask);
 console.log(JSON.stringify({ state, errors, log: await page.textContent('#log') }, null, 1));
 await browser.close();
-const expected = 'DATS,DATCP,PLAY,DATS,DATCP,FC,BC,SPEED,MODE,DATS,DATCP,PLAY,DATS,DATCP,PLAY';
+const expected = 'DATS,DATCP,PLAY,DATS,DATCP,FC,BC,SPEED,MODE,DATS,DATCP,PLAY,DATS,DATCP,PLAY,DATS,DATCP,PLAY,DATS,DATCP,PLAY';
 if (errors.length || state.commands.join() !== expected) process.exit(1);

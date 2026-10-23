@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111318">
   <title>Mask Control</title>
-  <link rel="stylesheet" href="style.css?v=20261023180505">
+  <link rel="stylesheet" href="style.css?v=20261023181046">
 </head>
 <body>
   <header class="bar">
@@ -25,6 +25,8 @@
     <nav class="tabs" role="tablist">
       <button role="tab" data-tab="picture" aria-selected="true">Picture</button>
       <button role="tab" data-tab="text">Text</button>
+      <button role="tab" data-tab="draw">Draw</button>
+      <button role="tab" data-tab="faces">Faces</button>
       <button role="tab" data-tab="test">Test</button>
     </nav>
   </header>
@@ -121,6 +123,56 @@
       </div>
     </section>
 
+    <!-- Draw -->
+    <section id="tab-draw" class="tab-panel" hidden>
+      <div class="card">
+        <div class="segmented tools" role="radiogroup" aria-label="Tool">
+          <label><input type="radio" name="draw-tool" value="pen" checked> Pen</label>
+          <label><input type="radio" name="draw-tool" value="eraser"> Eraser</label>
+          <label><input type="radio" name="draw-tool" value="fill"> Fill</label>
+        </div>
+        <div class="row swatches" id="draw-swatches">
+          <input id="draw-colour" type="color" value="#ffffff" aria-label="Custom colour">
+        </div>
+        <div class="row">
+          <label>Size
+            <select id="draw-size">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="5">5</option>
+            </select>
+          </label>
+          <button id="draw-undo">Undo</button>
+          <button id="draw-clear">Clear</button>
+        </div>
+        <div class="preview-wrap">
+          <canvas id="draw-canvas" class="mask-preview large"></canvas>
+        </div>
+        <div class="row">
+          <button id="draw-from-picture">Start from picture</button>
+        </div>
+        <div class="row">
+          <label>Slot <input id="draw-slot" type="number" min="1" max="34" value="3"></label>
+          <button id="draw-send" class="primary needs-connection">Send to mask</button>
+        </div>
+        <p class="hint">Draw here first, then tap Send. The mask shows its download animation for a few seconds before your drawing appears.</p>
+      </div>
+    </section>
+
+    <!-- Faces -->
+    <section id="tab-faces" class="tab-panel" hidden>
+      <div class="card">
+        <p class="hint">Tap a face, then send it or open it in Draw to change it.</p>
+        <div id="face-grid" class="face-grid"></div>
+        <div class="row">
+          <label>Slot <input id="face-slot" type="number" min="1" max="34" value="4"></label>
+          <button id="face-send" class="primary needs-connection">Send to mask</button>
+          <button id="face-edit">Edit in Draw</button>
+        </div>
+      </div>
+    </section>
+
     <!-- Test -->
     <section id="tab-test" class="tab-panel" hidden>
       <div class="card">
@@ -192,6 +244,6 @@
     window.addEventListener('error', function (e) { showStartupError(e.message || 'script error'); });
     window.addEventListener('unhandledrejection', function (e) { showStartupError(String(e.reason)); });
   </script>
-  <script type="module" src="js/app.js?v=20261023180505"></script>
+  <script type="module" src="js/app.js?v=20261023181046"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 import {
   SERVICE, CMD_CHAR, NOTIFY_CHAR, UPLOAD_CHAR,
   commands, encrypt, decrypt, splitIntoPackets, replyName, toHex,
-} from './protocol.js?v=20261023180505';
+} from './protocol.js?v=20261023181046';
 
 const REPLY_TIMEOUT_MS = 5000;
 

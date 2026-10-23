@@ -1,8 +1,10 @@
-import { Mask } from './mask.js?v=20261023180505';
-import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023180505';
-import { PictureEditor, loadImageFile } from './picture.js?v=20261023180505';
-import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023180505';
-import { drawShapeGuide } from './shape.js?v=20261023180505';
+import { Mask } from './mask.js?v=20261023181046';
+import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023181046';
+import { PictureEditor, loadImageFile } from './picture.js?v=20261023181046';
+import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023181046';
+import { DrawingPad } from './drawing.js?v=20261023181046';
+import { FACES, drawFace } from './faces.js?v=20261023181046';
+import { drawShapeGuide } from './shape.js?v=20261023181046';
 
 const $ = (id) => document.getElementById(id);
 
@@ -90,14 +92,15 @@ $('brightness').addEventListener('change', (e) => run(() => mask.setBrightness(N
 
 // --- Tabs ---
 
+function showTab(name) {
+  for (const t of document.querySelectorAll('[role=tab]')) {
+    const selected = t.dataset.tab === name;
+    t.setAttribute('aria-selected', selected);
+    $(`tab-${t.dataset.tab}`).hidden = !selected;
+  }
+}
 for (const tab of document.querySelectorAll('[role=tab]')) {
-  tab.addEventListener('click', () => {
-    for (const t of document.querySelectorAll('[role=tab]')) {
-      const selected = t === tab;
-      t.setAttribute('aria-selected', selected);
-      $(`tab-${t.dataset.tab}`).hidden = !selected;
-    }
-  });
+  tab.addEventListener('click', () => showTab(tab.dataset.tab));
 }
 
 // --- Shared helpers ---
@@ -254,6 +257,67 @@ $('still-send').addEventListener('click', () => run(async () => {
   await sendCanvas($('text-canvas'), slotFrom('still-slot'));
 }));
 
+// --- Draw ---
+
+const pad = new DrawingPad($('draw-canvas'), size);
+const PALETTE = ['#ffffff', '#ff2a2a', '#ff8a00', '#ffd400', '#39ff6a', '#3cf2ff', '#4f7bff', '#ff3cf0'];
+
+function setDrawColour(colour) {
+  pad.colour = colour;
+  $('draw-colour').value = colour;
+  for (const b of document.querySelectorAll('.swatch')) b.setAttribute('aria-pressed', b.dataset.colour === colour);
+}
+for (const colour of PALETTE) {
+  const b = document.createElement('button');
+  b.className = 'swatch';
+  b.style.background = colour;
+  b.dataset.colour = colour;
+  b.setAttribute('aria-label', colour);
+  b.addEventListener('click', () => setDrawColour(colour));
+  $('draw-colour').before(b);
+}
+$('draw-colour').addEventListener('input', (e) => setDrawColour(e.target.value));
+setDrawColour('#ffffff');
+
+for (const radio of document.querySelectorAll('input[name=draw-tool]')) {
+  radio.addEventListener('change', () => { pad.tool = radio.value; });
+}
+$('draw-size').addEventListener('change', (e) => { pad.brush = Number(e.target.value); });
+$('draw-undo').addEventListener('click', () => pad.undo());
+$('draw-clear').addEventListener('click', () => pad.clear());
+$('draw-from-picture').addEventListener('click', () => pad.copyFrom($('pic-canvas')));
+$('draw-send').addEventListener('click', () => run(() => sendCanvas($('draw-canvas'), slotFrom('draw-slot'))));
+
+// --- Faces ---
+
+let selectedFace = FACES[0];
+const faceCanvas = document.createElement('canvas');
+
+for (const face of FACES) {
+  const b = document.createElement('button');
+  b.className = 'face';
+  const thumb = document.createElement('canvas');
+  drawFace(thumb, face, { w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT });
+  b.append(thumb, face.name);
+  b.setAttribute('aria-pressed', face === selectedFace);
+  b.addEventListener('click', () => {
+    selectedFace = face;
+    for (const other of document.querySelectorAll('.face')) other.setAttribute('aria-pressed', other === b);
+  });
+  $('face-grid').append(b);
+}
+
+$('face-send').addEventListener('click', () => run(async () => {
+  drawFace(faceCanvas, selectedFace, size());
+  await sendCanvas(faceCanvas, slotFrom('face-slot'));
+}));
+
+$('face-edit').addEventListener('click', () => {
+  drawFace(faceCanvas, selectedFace, size());
+  pad.copyFrom(faceCanvas);
+  showTab('draw');
+});
+
 // --- Test ---
 
 $('show-slot-btn').addEventListener('click', () => run(async () => {
@@ -305,7 +369,7 @@ function drawPattern() {
 
 for (const id of ['pattern', 'colour']) $(id).addEventListener('input', drawPattern);
 for (const id of ['width', 'height']) {
-  $(id).addEventListener('input', () => { drawGuides(); editor.draw(); drawText(); drawPattern(); });
+  $(id).addEventListener('input', () => { drawGuides(); editor.draw(); pad.resize(); drawText(); drawPattern(); });
 }
 
 $('pattern-send').addEventListener('click', () => run(() => sendCanvas($('pattern-canvas'), slotFrom('pattern-slot'))));

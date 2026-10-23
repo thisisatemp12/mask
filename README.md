@@ -7,6 +7,8 @@ A web app for controlling a Shining Mask LED mask over Bluetooth from Chrome on 
   The preview dims the corners, which have no LEDs on the oval panel.
 - **Text:** scrolling text in the mask's own text mode (direction, speed, colour or rainbow,
   background), or text drawn as a still picture.
+- **Draw:** pen, eraser, fill, brush sizes, colours, undo; draw first, then send.
+- **Faces:** ready-made hacker-style LED faces to send as they are or edit in Draw.
 - **Test:** show an uploaded slot, the built-in pictures, and test patterns.
 
 ## Running locally
