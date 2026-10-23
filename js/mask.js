@@ -108,15 +108,16 @@ export class Mask {
   }
 
   /** Encrypt and send a plaintext command block. */
-  async send(block, label = '') {
+  async send(block, label = '', duringUpload = false) {
     if (!this.connected) throw new Error('Not connected');
+    if (this.uploading && !duringUpload) throw new Error('Wait for the upload to finish first');
     this.log('out', `${label}  [${toHex(block)}]`);
     await this.write(this.cmdChar, encrypt(block));
   }
 
-  async sendAndWait(block, label, replyPrefix) {
+  async sendAndWait(block, label, replyPrefix, duringUpload = false) {
     const reply = this.waitForReply(replyPrefix);
-    await this.send(block, label);
+    await this.send(block, label, duringUpload);
     return reply;
   }
 
@@ -132,6 +133,14 @@ export class Mask {
     return this.send(commands.animation(n), `ANIM ${n}`);
   }
 
+  /** Set how uploaded text is shown. Colours are [r, g, b]; a null colour turns that override off. */
+  async setTextStyle({ mode, speed, colour, background }) {
+    await this.send(commands.textColour(!!colour, colour || [255, 255, 255]), `FC ${colour || 'off'}`);
+    await this.send(commands.textBackground(!!background, background || [0, 0, 0]), `BC ${background || 'off'}`);
+    await this.send(commands.textSpeed(speed), `SPEED ${speed}`);
+    await this.send(commands.textMode(mode), `MODE ${mode}`);
+  }
+
   play(slots) {
     return this.send(commands.play(slots), `PLAY ${slots.join(',')}`);
   }
@@ -141,11 +150,24 @@ export class Mask {
    * animation while this runs, and any other command sent meanwhile corrupts
    * the stored image, so nothing else may be sent until it finishes.
    */
-  async uploadImage(data, slot, onProgress = () => {}) {
+  uploadImage(data, slot, onProgress) {
+    return this.upload(commands.startUpload(data.length, slot), `DATS ${data.length} bytes, slot ${slot}`, data, onProgress);
+  }
+
+  /** Upload a text bitmap and its colour array for the mask's own text mode. */
+  uploadText(bitmap, colours, onProgress) {
+    const data = new Uint8Array(bitmap.length + colours.length);
+    data.set(bitmap);
+    data.set(colours, bitmap.length);
+    const label = `DATS text, ${bitmap.length / 2} columns`;
+    return this.upload(commands.startTextUpload(data.length, bitmap.length), label, data, onProgress);
+  }
+
+  async upload(startBlock, label, data, onProgress = () => {}) {
     if (this.uploading) throw new Error('An upload is already running');
     this.uploading = true;
     try {
-      await this.sendAndWait(commands.startUpload(data.length, slot), `DATS ${data.length} bytes, slot ${slot}`, 'DATSOK');
+      await this.sendAndWait(startBlock, label, 'DATSOK', true);
       const packets = splitIntoPackets(data);
       for (let i = 0; i < packets.length; i++) {
         // The mask drops packets unless each one is acknowledged before the next.
@@ -156,7 +178,7 @@ export class Mask {
       }
       this.log('out', `Sent ${packets.length} packets`);
       const now = Math.floor(Date.now() / 1000);
-      await this.sendAndWait(commands.finishUpload(now), 'DATCP', 'DATCPOK');
+      await this.sendAndWait(commands.finishUpload(now), 'DATCP', 'DATCPOK', true);
     } finally {
       this.uploading = false;
     }

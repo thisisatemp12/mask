@@ -3,15 +3,18 @@
 A web app for controlling a Shining Mask LED mask over Bluetooth from Chrome on Android
 (or Chrome on Windows). No install needed: open the page, tap Connect, pick the mask.
 
-This is step 1 of the plan, a connection test page: connect, set brightness, try built-in
-pictures, and upload test images or a photo.
+- **Picture:** pick a photo, drag and zoom it into place, adjust colours, and send it to a slot.
+  The preview dims the corners, which have no LEDs on the oval panel.
+- **Text:** scrolling text in the mask's own text mode (direction, speed, colour or rainbow,
+  background), or text drawn as a still picture.
+- **Test:** show an uploaded slot, the built-in pictures, and test patterns.
 
 ## Running locally
 
 ```sh
 npm run serve      # http://localhost:8000
 npm test           # protocol and AES unit tests
-node tests/browser-smoke.mjs   # headless Chromium run against a fake mask (needs Playwright and the server running)
+node tests/browser-smoke.mjs OUT_DIR   # headless Chromium run against a fake mask, with screenshots (needs Playwright and the server running)
 ```
 
 Web Bluetooth only works on `https://` pages or `localhost`.

@@ -40,6 +40,7 @@ const fakeMask = () => {
   Object.defineProperty(navigator, 'bluetooth', { value: { requestDevice: async () => device } });
 };
 
+const outDir = process.argv[2] || '.';
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 412, height: 915 } });
 const errors = [];
@@ -48,11 +49,56 @@ await page.addInitScript(fakeMask);
 await page.goto('http://localhost:8000/');
 await page.click('#connect');
 await page.waitForSelector('#status.ok');
+const waitShowing = (prefix) => page.waitForFunction(
+  (p) => document.querySelector('#status').textContent.startsWith(p), prefix, { timeout: 15000 });
+const shot = (name) => page.screenshot({ path: `${outDir}/${name}.png`, fullPage: true });
+
+// Picture: generate a test photo in the page and feed it to the file input.
+const photo = await page.evaluate(async () => {
+  const c = new OffscreenCanvas(300, 400);
+  const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, 300, 400);
+  grad.addColorStop(0, '#ff0066'); grad.addColorStop(1, '#00ccff');
+  g.fillStyle = grad; g.fillRect(0, 0, 300, 400);
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(150, 170, 80, 0, 7); g.fill();
+  const blob = await c.convertToBlob({ type: 'image/png' });
+  return [...new Uint8Array(await blob.arrayBuffer())];
+});
+await page.setInputFiles('#pic-file', { name: 'test.png', mimeType: 'image/png', buffer: Buffer.from(photo) });
+await page.waitForTimeout(300);
+const box = await page.locator('#pic-canvas').boundingBox();
+await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+await page.mouse.down();
+await page.mouse.move(box.x + box.width / 2 + 30, box.y + box.height / 2 + 20, { steps: 5 });
+await page.mouse.up();
+await shot('picture');
+await page.click('#pic-send');
+await waitShowing('Showing slot 1');
+
+// Scrolling text.
+await page.click('[data-tab=text]');
+await page.fill('#text-input', 'Hello mask!');
+await page.check('#text-rainbow');
+await shot('text-scroll');
+await page.click('#text-send');
+await waitShowing('Showing text');
+
+// Still text.
+await page.check('input[name=text-kind][value=still]');
+await page.fill('#text-input', 'BOO! happy halloween');
+await shot('text-still');
+await page.click('#still-send');
+await waitShowing('Showing slot 2');
+
+// Test pattern.
+await page.click('[data-tab=test]');
 await page.selectOption('#pattern', 'corners');
-await page.click('#upload');
-await page.waitForFunction(() => document.querySelector('#status').textContent.startsWith('Showing'), null, { timeout: 15000 });
+await shot('test');
+await page.click('#pattern-send');
+await waitShowing('Showing slot 34');
+
 const state = await page.evaluate(() => window.__fakeMask);
-await page.screenshot({ path: process.argv[2] || 'smoke.png', fullPage: true });
 console.log(JSON.stringify({ state, errors, log: await page.textContent('#log') }, null, 1));
 await browser.close();
-if (errors.length || state.packets !== 82 || state.commands.join() !== 'DATS,DATCP,PLAY') process.exit(1);
+const expected = 'DATS,DATCP,PLAY,DATS,DATCP,FC,BC,SPEED,MODE,DATS,DATCP,PLAY,DATS,DATCP,PLAY';
+if (errors.length || state.commands.join() !== expected) process.exit(1);

@@ -67,8 +67,16 @@ export const commands = {
   animation: (n) => buildCommand('ANIM', [byte(n)]),
   /** Show uploaded slots, cycling through them if there is more than one (up to 10). */
   play: (slots) => buildCommand('PLAY', [slots.length, ...slots]),
-  /** Start uploading `size` bytes into `slot`. */
+  /** Start uploading `size` bytes of image data into `slot`. */
   startUpload: (size, slot) => buildCommand('DATS', [...u16(size), ...u16(slot), 1]),
+  /** Start uploading scrolling text: a 16-pixel-high bitmap followed by its colour array. */
+  startTextUpload: (totalSize, bitmapSize) => buildCommand('DATS', [...u16(totalSize), ...u16(bitmapSize), 0]),
+  /** Text animation: 1 steady, 2 blink, 3 scroll right to left, 4 scroll left to right. */
+  textMode: (mode) => buildCommand('MODE', [byte(mode)]),
+  textSpeed: (speed) => buildCommand('SPEED', [byte(speed)]),
+  /** Text colour for the whole text. When disabled, the per-column colour array is used. */
+  textColour: (enabled, [r, g, b]) => buildCommand('FC', [enabled ? 1 : 0, byte(r), byte(g), byte(b)]),
+  textBackground: (enabled, [r, g, b]) => buildCommand('BC', [enabled ? 1 : 0, byte(r), byte(g), byte(b)]),
   /** Finish an upload. The official app sends the current Unix time. */
   finishUpload: (unixSeconds) => buildCommand('DATCP', u32(unixSeconds)),
 };
@@ -88,6 +96,30 @@ export function encodeImage(rgba, width, height) {
       out[o++] = rgba[i + 2];
     }
   }
+  return out;
+}
+
+export const TEXT_HEIGHT = 16;
+
+/**
+ * Encode a text bitmap for the mask's text mode. `isLit(x, y)` says whether the
+ * pixel at column x, row y (0 = top, 15 = bottom) is on. Each column becomes two
+ * bytes: rows 0-7 then rows 8-15, with the top row of each half in the high bit.
+ */
+export function encodeTextBitmap(width, isLit) {
+  const out = new Uint8Array(width * 2);
+  for (let x = 0; x < width; x++) {
+    for (let y = 0; y < TEXT_HEIGHT; y++) {
+      if (isLit(x, y)) out[x * 2 + (y >> 3)] |= 0x80 >> (y & 7);
+    }
+  }
+  return out;
+}
+
+/** Colour array for text mode: 3 bytes of RGB per column. */
+export function encodeTextColours(width, colourAt) {
+  const out = new Uint8Array(width * 3);
+  for (let x = 0; x < width; x++) out.set(colourAt(x).map(byte), x * 3);
   return out;
 }
 

@@ -4,7 +4,7 @@ import { createCipheriv, randomBytes } from 'node:crypto';
 import { Aes128 } from '../js/aes.js';
 import {
   KEY, hexToBytes, buildCommand, commands, encrypt, decrypt,
-  encodeImage, splitIntoPackets, replyName,
+  encodeImage, splitIntoPackets, replyName, encodeTextBitmap,
 } from '../js/protocol.js';
 
 const nodeEcb = (key, block) => {
@@ -67,4 +67,15 @@ test('reply names are read from decrypted blocks', () => {
   const reply = buildCommand('DATSOK');
   assert.equal(replyName(decrypt(encrypt(reply))), 'DATSOK');
   assert.equal(replyName(buildCommand('REOK', [0x01])), 'REOK');
+});
+
+test('text bitmaps put the top row of each half in the high bit', () => {
+  // Column 0 lights rows 0 and 8, column 1 lights rows 7 and 15.
+  const lit = new Set(['0,0', '0,8', '1,7', '1,15']);
+  const bitmap = encodeTextBitmap(2, (x, y) => lit.has(`${x},${y}`));
+  assert.deepEqual(bitmap, Uint8Array.from([0x80, 0x80, 0x01, 0x01]));
+  assert.deepEqual(
+    commands.startTextUpload(10, 4).slice(0, 10),
+    Uint8Array.from([9, ...Buffer.from('DATS'), 0, 10, 0, 4, 0]),
+  );
 });
