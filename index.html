@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111318">
+  <title>Mask Control</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Mask Control</h1>
+    <p class="sub">Connection test</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Connect</h2>
+      <p class="hint">Turn the mask on, make sure the official app is closed, then tap Connect and pick the device whose name starts with MASK.</p>
+      <div class="row">
+        <button id="connect" class="primary">Connect</button>
+        <button id="disconnect" disabled>Disconnect</button>
+      </div>
+      <p id="status" class="status">Not connected</p>
+      <p id="no-bt" class="warn" hidden>This browser can't use Bluetooth. Open this page in Chrome on your Android phone or Windows PC.</p>
+    </section>
+
+    <section class="card needs-connection">
+      <h2>2. Brightness</h2>
+      <div class="row">
+        <input id="brightness" type="range" min="0" max="255" value="128">
+        <output id="brightness-value">128</output>
+      </div>
+    </section>
+
+    <section class="card needs-connection">
+      <h2>3. Built-in pictures</h2>
+      <p class="hint">These commands come from older notes and may not work on every mask. Try a few numbers.</p>
+      <div class="row">
+        <label>Number <input id="builtin-number" type="number" min="1" max="99" value="1"></label>
+        <button id="builtin-image">Show image</button>
+        <button id="builtin-anim">Show animation</button>
+      </div>
+    </section>
+
+    <section class="card needs-connection">
+      <h2>4. Upload a test image</h2>
+      <div class="row">
+        <label>Pattern
+          <select id="pattern">
+            <option value="split">Left red, right blue</option>
+            <option value="corners">Orientation check</option>
+            <option value="solid">Solid colour</option>
+            <option value="photo">Photo from phone</option>
+          </select>
+        </label>
+        <input id="colour" type="color" value="#00ff88" hidden>
+        <input id="photo" type="file" accept="image/*" hidden>
+      </div>
+      <div class="preview-wrap">
+        <canvas id="preview"></canvas>
+      </div>
+      <div class="row">
+        <label>Slot <input id="slot" type="number" min="1" max="34" value="1"></label>
+        <button id="upload" class="primary">Upload and show</button>
+      </div>
+      <progress id="progress" max="1" value="0" hidden></progress>
+      <p class="hint">The mask plays its own download animation during uploads. It takes several seconds, and nothing else can be sent until it's done.</p>
+    </section>
+
+    <section class="card">
+      <h2>Log</h2>
+      <p class="hint">If something doesn't work, tap Copy log and paste it to Claude.</p>
+      <div class="row">
+        <button id="copy-log">Copy log</button>
+        <button id="clear-log">Clear</button>
+      </div>
+      <pre id="log"></pre>
+    </section>
+
+    <details class="card">
+      <summary>Advanced</summary>
+      <p class="hint">Image size in LEDs. 46 × 58 is what's been reported for most masks. Only change it if test images look stretched or cut off.</p>
+      <div class="row">
+        <label>Width <input id="width" type="number" min="1" max="128" value="46"></label>
+        <label>Height <input id="height" type="number" min="1" max="128" value="58"></label>
+      </div>
+    </details>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
