@@ -1,11 +1,12 @@
-import { Mask } from './mask.js?v=20261023182506';
-import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023182506';
-import { PictureEditor, loadImageFile } from './picture.js?v=20261023182506';
-import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023182506';
-import { DrawingPad } from './drawing.js?v=20261023182506';
-import { HYPNO_MOUTHS, PATTERNS, drawHypno, hypnoFrames } from './hypno.js?v=20261023182506';
-import { FACES, FACE_ANIMATIONS, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023182506';
-import { drawShapeGuide } from './shape.js?v=20261023182506';
+import { Mask } from './mask.js?v=20261023183327';
+import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023183327';
+import { PictureEditor, loadImageFile } from './picture.js?v=20261023183327';
+import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023183327';
+import { DrawingPad } from './drawing.js?v=20261023183327';
+import { SMOOTH_PATTERNS, SHAPED_PATTERNS, buildSmoothStrip, drawSmoothPreview, drawShapedVisor } from './visor.js?v=20261023183327';
+import { HYPNO_MOUTHS, PATTERNS, drawHypno, hypnoFrames } from './hypno.js?v=20261023183327';
+import { FACES, FACE_ANIMATIONS, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023183327';
+import { drawShapeGuide } from './shape.js?v=20261023183327';
 
 const $ = (id) => document.getElementById(id);
 
@@ -437,6 +438,97 @@ $('hypno-send').addEventListener('click', () => run(async () => {
   });
   await sendAnimation(canvases, phases.map((_, i) => i), slotFrom('hypno-slot'));
 }));
+
+// --- Visor ---
+
+for (const [key, p] of Object.entries(SMOOTH_PATTERNS)) $('visor-smooth-pattern').append(new Option(p.name, key));
+for (const [key, p] of Object.entries(SHAPED_PATTERNS)) $('visor-shaped-pattern').append(new Option(p.name, key));
+
+const visorKind = () => document.querySelector('input[name=visor-kind]:checked').value;
+let visorStrip = null;
+let visorOffset = 0;
+
+function rebuildVisorStrip() {
+  visorStrip = buildSmoothStrip($('visor-smooth-pattern').value, $('visor-colouring').value, $('visor-smooth-colour').value);
+}
+
+const visorFrameCount = () => Number($('visor-frames').value);
+const shapedOptions = (phase) => ({
+  pattern: $('visor-shaped-pattern').value,
+  colour: $('visor-shaped-colour').value,
+  grid: $('visor-grid').checked,
+  phase,
+});
+
+function updateVisorControls() {
+  const kind = visorKind();
+  $('visor-smooth-opts').hidden = kind !== 'smooth';
+  $('visor-shaped-opts').hidden = kind !== 'shaped';
+  $('visor-slot-hint').textContent = `${visorFrameCount()} frames, using ${slotRange(slotFrom('visor-slot'), visorFrameCount())}.`;
+  if (kind === 'shaped') drawShapedPreview();
+}
+
+function drawShapedPreview() {
+  const n = visorFrameCount();
+  drawShapedVisor($('visor-canvas'), size(), shapedOptions((tick % n) / n));
+}
+previewers.push(() => { if (visorKind() === 'shaped') drawShapedPreview(); });
+
+// The smooth preview scrolls continuously. The mask's real speed for a given
+// SPEED value isn't measured yet, so this only shows the motion and direction.
+let lastFrame = performance.now();
+function animateSmoothPreview(now) {
+  const dt = (now - lastFrame) / 1000;
+  lastFrame = now;
+  if (visorKind() === 'smooth' && !$('tab-visor').hidden && visorStrip) {
+    const columnsPerSecond = 4 + (Number($('visor-speed').value) / 255) * 26;
+    const dir = $('visor-direction').value === '3' ? 1 : -1;
+    visorOffset += dir * columnsPerSecond * dt;
+    drawSmoothPreview($('visor-canvas'), size(), visorStrip, visorOffset);
+  }
+  requestAnimationFrame(animateSmoothPreview);
+}
+requestAnimationFrame(animateSmoothPreview);
+
+for (const id of ['visor-smooth-pattern', 'visor-colouring', 'visor-smooth-colour']) {
+  $(id).addEventListener('input', rebuildVisorStrip);
+}
+for (const id of ['visor-shaped-pattern', 'visor-shaped-colour', 'visor-grid', 'visor-frames', 'visor-slot']) {
+  $(id).addEventListener('input', updateVisorControls);
+}
+for (const radio of document.querySelectorAll('input[name=visor-kind]')) radio.addEventListener('change', updateVisorControls);
+
+const visorStyle = () => ({
+  mode: Number($('visor-direction').value),
+  speed: Number($('visor-speed').value),
+  colour: null,
+  background: null,
+});
+
+$('visor-smooth-send').addEventListener('click', () => run(async () => {
+  rebuildVisorStrip();
+  await withProgress('Uploading visor...', (onProgress) => mask.uploadText(visorStrip.bitmap, visorStrip.colours, onProgress));
+  await mask.setTextStyle(visorStyle());
+  setStatus('Showing visor', 'ok');
+}));
+
+$('visor-smooth-style').addEventListener('click', () => run(async () => {
+  await mask.setTextStyle(visorStyle());
+  setStatus('Visor speed updated', 'ok');
+}));
+
+$('visor-shaped-send').addEventListener('click', () => run(async () => {
+  const n = visorFrameCount();
+  const canvases = Array.from({ length: n }, (_, i) => {
+    const c = document.createElement('canvas');
+    drawShapedVisor(c, size(), shapedOptions(i / n));
+    return c;
+  });
+  await sendAnimation(canvases, canvases.map((_, i) => i), slotFrom('visor-slot'));
+}));
+
+rebuildVisorStrip();
+updateVisorControls();
 
 // --- Test ---
 

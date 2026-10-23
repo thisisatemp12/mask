@@ -123,6 +123,20 @@ await shot('hypno');
 await page.click('#hypno-send');
 await waitShowing('Playing slots 20-25');
 
+// Visor: smooth through text mode, then shaped frames.
+await page.click('[data-tab=visor]');
+await page.selectOption('#visor-smooth-pattern', 'chevrons');
+await page.selectOption('#visor-colouring', 'rainbow');
+await page.waitForTimeout(500);
+await shot('visor-smooth');
+await page.click('#visor-smooth-send');
+await waitShowing('Showing visor');
+await page.check('input[name=visor-kind][value=shaped]');
+await page.waitForTimeout(300);
+await shot('visor-shaped');
+await page.click('#visor-shaped-send');
+await waitShowing('Playing slots 27-32');
+
 // Test pattern.
 await page.click('[data-tab=test]');
 await page.selectOption('#pattern', 'corners');
@@ -155,5 +169,5 @@ const state = await page.evaluate(() => window.__fakeMask);
 console.log(JSON.stringify({ state, errors, log: await page.textContent('#log') }, null, 1));
 await browser.close();
 const expected = ['DATS,DATCP,PLAY,DATS,DATCP,FC,BC,SPEED,MODE,DATS,DATCP,PLAY,DATS,DATCP,PLAY,DATS,DATCP,PLAY',
-  'DATS,DATCP,'.repeat(2) + 'PLAY', 'DATS,DATCP,'.repeat(6) + 'PLAY', 'DATS,DATCP,PLAY'].join();
+  'DATS,DATCP,'.repeat(2) + 'PLAY', 'DATS,DATCP,'.repeat(6) + 'PLAY', 'DATS,DATCP,FC,BC,SPEED,MODE', 'DATS,DATCP,'.repeat(6) + 'PLAY', 'DATS,DATCP,PLAY'].join();
 if (errors.length || state.commands.join() !== expected) process.exit(1);

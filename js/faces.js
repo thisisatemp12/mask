@@ -1,4 +1,4 @@
-import { hasLed } from './shape.js?v=20261023182506';
+import { hasLed } from './shape.js?v=20261023183327';
 
 // Ready-made pixel faces in a hacker LED-mask style: blocky emoticon eyes and
 // mouths drawn as sprites on the mask's grid. Each face is drawn into a

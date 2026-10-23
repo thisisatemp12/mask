@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111318">
   <title>Mask Control</title>
-  <link rel="stylesheet" href="style.css?v=20261023182506">
+  <link rel="stylesheet" href="style.css?v=20261023183327">
 </head>
 <body>
   <header class="bar">
@@ -28,6 +28,7 @@
       <button role="tab" data-tab="draw">Draw</button>
       <button role="tab" data-tab="faces">Faces</button>
       <button role="tab" data-tab="hypno">Hypno</button>
+      <button role="tab" data-tab="visor">Visor</button>
       <button role="tab" data-tab="test">Test</button>
     </nav>
   </header>
@@ -218,6 +219,70 @@
       </div>
     </section>
 
+    <!-- Visor -->
+    <section id="tab-visor" class="tab-panel" hidden>
+      <div class="card">
+        <div class="segmented" role="radiogroup">
+          <label><input type="radio" name="visor-kind" value="smooth" checked> Smooth</label>
+          <label><input type="radio" name="visor-kind" value="shaped"> Shaped</label>
+        </div>
+        <div class="preview-wrap">
+          <canvas id="visor-canvas" class="mask-preview"></canvas>
+        </div>
+
+        <div id="visor-smooth-opts">
+          <div class="row">
+            <label>Pattern <select id="visor-smooth-pattern"></select></label>
+          </div>
+          <div class="row">
+            <label>Colour
+              <select id="visor-colouring">
+                <option value="solid">Solid</option>
+                <option value="rainbow">Rainbow</option>
+                <option value="fade">Fade</option>
+              </select>
+            </label>
+            <input id="visor-smooth-colour" type="color" value="#c040ff" aria-label="Colour">
+          </div>
+          <div class="row">
+            <label>Direction
+              <select id="visor-direction">
+                <option value="3">Left</option>
+                <option value="4">Right</option>
+              </select>
+            </label>
+          </div>
+          <div class="sliders">
+            <label>Speed <input id="visor-speed" type="range" min="0" max="255" value="128"></label>
+          </div>
+          <div class="row">
+            <button id="visor-smooth-send" class="primary needs-connection">Send to mask</button>
+            <button id="visor-smooth-style" class="needs-connection">Update speed only</button>
+          </div>
+          <p class="hint">Uses the mask's own smooth scrolling, the same mode as scrolling text. The band's height on the face is set by the mask, just below the eye holes, and each column has one colour.</p>
+        </div>
+
+        <div id="visor-shaped-opts" hidden>
+          <div class="row">
+            <label>Effect <select id="visor-shaped-pattern"></select></label>
+            <input id="visor-shaped-colour" type="color" value="#c040ff" aria-label="Colour">
+          </div>
+          <div class="row">
+            <label><input id="visor-grid" type="checkbox" checked> LED grid look</label>
+          </div>
+          <div class="sliders">
+            <label>Frames <input id="visor-frames" type="range" min="2" max="10" value="6"></label>
+          </div>
+          <p id="visor-slot-hint" class="hint"></p>
+          <div class="row">
+            <label>Slot <input id="visor-slot" type="number" min="1" max="34" value="27"></label>
+            <button id="visor-shaped-send" class="primary needs-connection">Send to mask</button>
+          </div>
+          <p class="hint">Covers the eyes in any shape, but animates at about one frame per second.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Test -->
     <section id="tab-test" class="tab-panel" hidden>
       <div class="card">
@@ -289,6 +354,6 @@
     window.addEventListener('error', function (e) { showStartupError(e.message || 'script error'); });
     window.addEventListener('unhandledrejection', function (e) { showStartupError(String(e.reason)); });
   </script>
-  <script type="module" src="js/app.js?v=20261023182506"></script>
+  <script type="module" src="js/app.js?v=20261023183327"></script>
 </body>
 </html>
