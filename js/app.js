@@ -1,12 +1,12 @@
-import { Mask } from './mask.js?v=20261023183327';
-import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023183327';
-import { PictureEditor, loadImageFile } from './picture.js?v=20261023183327';
-import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023183327';
-import { DrawingPad } from './drawing.js?v=20261023183327';
-import { SMOOTH_PATTERNS, SHAPED_PATTERNS, buildSmoothStrip, drawSmoothPreview, drawShapedVisor } from './visor.js?v=20261023183327';
-import { HYPNO_MOUTHS, PATTERNS, drawHypno, hypnoFrames } from './hypno.js?v=20261023183327';
-import { FACES, FACE_ANIMATIONS, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023183327';
-import { drawShapeGuide } from './shape.js?v=20261023183327';
+import { Mask } from './mask.js?v=20261023183425';
+import { commands, encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023183425';
+import { PictureEditor, loadImageFile } from './picture.js?v=20261023183425';
+import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023183425';
+import { DrawingPad } from './drawing.js?v=20261023183425';
+import { SMOOTH_PATTERNS, SHAPED_PATTERNS, buildSmoothStrip, drawSmoothPreview, drawShapedVisor } from './visor.js?v=20261023183425';
+import { HYPNO_MOUTHS, PATTERNS, drawHypno, hypnoFrames } from './hypno.js?v=20261023183425';
+import { FACES, FACE_ANIMATIONS, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023183425';
+import { drawShapeGuide } from './shape.js?v=20261023183425';
 
 const $ = (id) => document.getElementById(id);
 
@@ -536,6 +536,26 @@ $('show-slot-btn').addEventListener('click', () => run(async () => {
   const slot = slotFrom('show-slot');
   await mask.play([slot]);
   setStatus(`Showing slot ${slot}`, 'ok');
+}));
+
+/** Parse "20-25" or "3,5,7" into a slot list (at most 10). */
+function parseSlots(text) {
+  const slots = [];
+  for (const part of text.split(',')) {
+    const [a, b] = part.split('-').map((n) => Number(n.trim()));
+    if (!a) continue;
+    for (let i = a; i <= (b || a); i++) slots.push(Math.max(1, Math.min(34, i)));
+  }
+  if (!slots.length) throw new Error('Enter slots like 20-25 or 3,5,7');
+  return slots.slice(0, 10);
+}
+
+$('exp-play').addEventListener('click', () => run(async () => {
+  const slots = parseSlots($('exp-slots').value);
+  const speed = Number($('exp-speed').value);
+  await mask.send(commands.textSpeed(speed), `SPEED ${speed}`);
+  await mask.play(slots);
+  setStatus(`Playing slots ${slots.join(',')} after SPEED ${speed}`, 'ok');
 }));
 
 const builtinNumber = () => Number($('builtin-number').value) || 1;

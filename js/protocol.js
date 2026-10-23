@@ -10,7 +10,7 @@
 // - Image bytes go to UPLOAD_CHAR unencrypted in 100-byte packets:
 //   [chunk length + 1, packet index, up to 98 data bytes, zero padding].
 
-import { Aes128 } from './aes.js?v=20261023183327';
+import { Aes128 } from './aes.js?v=20261023183425';
 
 export const SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb';
 export const CMD_CHAR = 'd44bc439-abfd-45a2-b575-925416129600';

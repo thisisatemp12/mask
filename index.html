@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111318">
   <title>Mask Control</title>
-  <link rel="stylesheet" href="style.css?v=20261023183327">
+  <link rel="stylesheet" href="style.css?v=20261023183425">
 </head>
 <body>
   <header class="bar">
@@ -295,6 +295,20 @@
       </div>
 
       <div class="card">
+        <h2>Experiment: faster slot playback</h2>
+        <p class="hint">Animations from slots play at about one frame per second. This sends a speed value, then replays the slots, to see if your mask goes faster. Watch whether the frame rate changes.</p>
+        <div class="row">
+          <label>Slots <input id="exp-slots" type="text" value="20-25" size="7"></label>
+        </div>
+        <div class="sliders">
+          <label>Speed <input id="exp-speed" type="range" min="0" max="255" value="255"></label>
+        </div>
+        <div class="row">
+          <button id="exp-play" class="needs-connection">Set speed and play</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2>Built-in pictures</h2>
         <p class="hint">Images go up to about 105 and animations to about 69.</p>
         <div class="row">
@@ -354,6 +368,6 @@
     window.addEventListener('error', function (e) { showStartupError(e.message || 'script error'); });
     window.addEventListener('unhandledrejection', function (e) { showStartupError(String(e.reason)); });
   </script>
-  <script type="module" src="js/app.js?v=20261023183327"></script>
+  <script type="module" src="js/app.js?v=20261023183425"></script>
 </body>
 </html>

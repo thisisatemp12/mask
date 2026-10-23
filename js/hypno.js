@@ -1,7 +1,7 @@
 // Hypnotic eyes: spirals and patterns drawn per LED from polar coordinates,
 // animated by advancing a phase from frame to frame.
 
-import { clipToPanel } from './faces.js?v=20261023183327';
+import { clipToPanel } from './faces.js?v=20261023183425';
 
 const TAU = Math.PI * 2;
 
