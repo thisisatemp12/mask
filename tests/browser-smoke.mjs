@@ -116,6 +116,27 @@ await shot('test');
 await page.click('#pattern-send');
 await waitShowing('Showing slot 34');
 
+// Every ready-made face must stay off the eye holes and inside the oval.
+const faceProblems = await page.evaluate(async () => {
+  const v = document.querySelector('script[type=module]').src.split('?')[1];
+  const { FACES, drawFace } = await import(`/js/faces.js?${v}`);
+  const { hasLed } = await import(`/js/shape.js?${v}`);
+  const problems = [];
+  const c = document.createElement('canvas');
+  for (const face of FACES) {
+    drawFace(c, face, { w: 46, h: 58 });
+    const d = c.getContext('2d').getImageData(0, 0, 46, 58).data;
+    let off = 0;
+    for (let y = 0; y < 58; y++) for (let x = 0; x < 46; x++) {
+      const i = (y * 46 + x) * 4;
+      if ((d[i] || d[i + 1] || d[i + 2]) && !hasLed(x, y, 46, 58)) off++;
+    }
+    if (off) problems.push(`${face.name}: ${off} pixels off the panel`);
+  }
+  return problems;
+});
+errors.push(...faceProblems);
+
 const state = await page.evaluate(() => window.__fakeMask);
 console.log(JSON.stringify({ state, errors, log: await page.textContent('#log') }, null, 1));
 await browser.close();

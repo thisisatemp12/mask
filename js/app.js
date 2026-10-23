@@ -1,10 +1,10 @@
-import { Mask } from './mask.js?v=20261023181046';
-import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023181046';
-import { PictureEditor, loadImageFile } from './picture.js?v=20261023181046';
-import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023181046';
-import { DrawingPad } from './drawing.js?v=20261023181046';
-import { FACES, drawFace } from './faces.js?v=20261023181046';
-import { drawShapeGuide } from './shape.js?v=20261023181046';
+import { Mask } from './mask.js?v=20261023181959';
+import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023181959';
+import { PictureEditor, loadImageFile } from './picture.js?v=20261023181959';
+import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023181959';
+import { DrawingPad } from './drawing.js?v=20261023181959';
+import { FACES, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023181959';
+import { drawShapeGuide } from './shape.js?v=20261023181959';
 
 const $ = (id) => document.getElementById(id);
 
@@ -291,29 +291,50 @@ $('draw-send').addEventListener('click', () => run(() => sendCanvas($('draw-canv
 // --- Faces ---
 
 let selectedFace = FACES[0];
-const faceCanvas = document.createElement('canvas');
+const faceCanvas = $('face-canvas');
+const thumbs = [];
+// The slider runs top to bottom of the mask; the input's value is the eye band's top row.
+const eyeTop = () => Number($('face-eyes').value);
+
+function drawFaces() {
+  drawFace(faceCanvas, selectedFace, size(), eyeTop());
+  for (const { thumb, face } of thumbs) {
+    drawFace(thumb, face, { w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT }, eyeTop());
+    const guide = document.createElement('canvas');
+    drawShapeGuide(guide, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    thumb.getContext('2d').drawImage(guide, 0, 0);
+  }
+}
 
 for (const face of FACES) {
   const b = document.createElement('button');
   b.className = 'face';
   const thumb = document.createElement('canvas');
-  drawFace(thumb, face, { w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT });
+  thumbs.push({ thumb, face });
   b.append(thumb, face.name);
   b.setAttribute('aria-pressed', face === selectedFace);
   b.addEventListener('click', () => {
     selectedFace = face;
     for (const other of document.querySelectorAll('.face')) other.setAttribute('aria-pressed', other === b);
+    drawFace(faceCanvas, selectedFace, size(), eyeTop());
   });
   $('face-grid').append(b);
 }
 
+$('face-eyes').min = EYE_TOP_MIN;
+$('face-eyes').max = EYE_TOP_MAX;
+$('face-eyes').value = EYE_TOP_DEFAULT;
+$('face-eyes').addEventListener('input', drawFaces);
+$('face-eyes-above').addEventListener('click', () => { $('face-eyes').value = 6; drawFaces(); });
+$('face-eyes-below').addEventListener('click', () => { $('face-eyes').value = EYE_TOP_DEFAULT; drawFaces(); });
+
 $('face-send').addEventListener('click', () => run(async () => {
-  drawFace(faceCanvas, selectedFace, size());
+  drawFace(faceCanvas, selectedFace, size(), eyeTop());
   await sendCanvas(faceCanvas, slotFrom('face-slot'));
 }));
 
 $('face-edit').addEventListener('click', () => {
-  drawFace(faceCanvas, selectedFace, size());
+  drawFace(faceCanvas, selectedFace, size(), eyeTop());
   pad.copyFrom(faceCanvas);
   showTab('draw');
 });
@@ -369,7 +390,7 @@ function drawPattern() {
 
 for (const id of ['pattern', 'colour']) $(id).addEventListener('input', drawPattern);
 for (const id of ['width', 'height']) {
-  $(id).addEventListener('input', () => { drawGuides(); editor.draw(); pad.resize(); drawText(); drawPattern(); });
+  $(id).addEventListener('input', () => { drawGuides(); editor.draw(); pad.resize(); drawText(); drawPattern(); drawFaces(); });
 }
 
 $('pattern-send').addEventListener('click', () => run(() => sendCanvas($('pattern-canvas'), slotFrom('pattern-slot'))));
@@ -380,4 +401,5 @@ drawGuides();
 editor.draw();
 drawText();
 drawPattern();
+drawFaces();
 log('info', `Ready. Web Bluetooth ${navigator.bluetooth ? 'available' : 'NOT available'}.`);

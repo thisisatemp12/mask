@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111318">
   <title>Mask Control</title>
-  <link rel="stylesheet" href="style.css?v=20261023181046">
+  <link rel="stylesheet" href="style.css?v=20261023181959">
 </head>
 <body>
   <header class="bar">
@@ -164,6 +164,16 @@
     <section id="tab-faces" class="tab-panel" hidden>
       <div class="card">
         <p class="hint">Tap a face, then send it or open it in Draw to change it.</p>
+        <div class="preview-wrap">
+          <canvas id="face-canvas" class="mask-preview"></canvas>
+        </div>
+        <div class="sliders">
+          <label>Eye height <input id="face-eyes" type="range" min="4" max="28" value="22"></label>
+        </div>
+        <div class="row">
+          <button id="face-eyes-above">Above holes</button>
+          <button id="face-eyes-below">Below holes</button>
+        </div>
         <div id="face-grid" class="face-grid"></div>
         <div class="row">
           <label>Slot <input id="face-slot" type="number" min="1" max="34" value="4"></label>
@@ -244,6 +254,6 @@
     window.addEventListener('error', function (e) { showStartupError(e.message || 'script error'); });
     window.addEventListener('unhandledrejection', function (e) { showStartupError(String(e.reason)); });
   </script>
-  <script type="module" src="js/app.js?v=20261023181046"></script>
+  <script type="module" src="js/app.js?v=20261023181959"></script>
 </body>
 </html>
