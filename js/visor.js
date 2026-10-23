@@ -7,8 +7,8 @@
 // - Shaped: a visor drawn across the eyes as full-colour frames in slots,
 //   looped at the mask's slot rate of about one frame a second.
 
-import { TEXT_HEIGHT, encodeTextBitmap, encodeTextColours } from './protocol.js?v=20261023183850';
-import { clipToPanel } from './faces.js?v=20261023183850';
+import { TEXT_HEIGHT, encodeTextBitmap, encodeTextColours } from './protocol.js?v=20261023185432';
+import { clipToPanel } from './faces.js?v=20261023185432';
 
 export const TEXT_BAND_TOP = 21;
 

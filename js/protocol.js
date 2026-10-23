@@ -10,7 +10,7 @@
 // - Image bytes go to UPLOAD_CHAR unencrypted in 100-byte packets:
 //   [chunk length + 1, packet index, up to 98 data bytes, zero padding].
 
-import { Aes128 } from './aes.js?v=20261023183850';
+import { Aes128 } from './aes.js?v=20261023185432';
 
 export const SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb';
 export const CMD_CHAR = 'd44bc439-abfd-45a2-b575-925416129600';
@@ -67,6 +67,8 @@ export const commands = {
   animation: (n) => buildCommand('ANIM', [byte(n)]),
   /** Show uploaded slots, cycling through them if there is more than one (up to 10). */
   play: (slots) => buildCommand('PLAY', [slots.length, ...slots]),
+  /** Ask how many DIY images are stored. */
+  check: () => buildCommand('CHEC'),
   /** Start uploading `size` bytes of image data into `slot`. */
   startUpload: (size, slot) => buildCommand('DATS', [...u16(size), ...u16(slot), 1]),
   /** Start uploading scrolling text: a 16-pixel-high bitmap followed by its colour array. */

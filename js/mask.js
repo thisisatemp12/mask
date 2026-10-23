@@ -3,7 +3,7 @@
 import {
   SERVICE, CMD_CHAR, NOTIFY_CHAR, UPLOAD_CHAR,
   commands, encrypt, decrypt, splitIntoPackets, replyName, toHex,
-} from './protocol.js?v=20261023183850';
+} from './protocol.js?v=20261023185432';
 
 const REPLY_TIMEOUT_MS = 5000;
 
@@ -75,6 +75,11 @@ export class Mask {
     } else {
       this.log('in', `raw [${toHex(bytes)}]`);
     }
+    // An error reply fails whatever is waiting, rather than leaving it to time out.
+    if (name.startsWith('ERROR')) {
+      this.rejectWaiters(new Error(`The mask refused with ${name}`));
+      return;
+    }
     const i = this.waiters.findIndex((w) => name.startsWith(w.prefix));
     if (i >= 0) {
       const [w] = this.waiters.splice(i, 1);
@@ -118,6 +123,13 @@ export class Mask {
   async sendAndWait(block, label, replyPrefix, duringUpload = false) {
     const reply = this.waitForReply(replyPrefix);
     await this.send(block, label, duringUpload);
+    return reply;
+  }
+
+  /** Ask how many DIY images are stored. The reply is logged. */
+  async check() {
+    const reply = this.waitForReply('CHEC');
+    await this.send(commands.check(), 'CHEC');
     return reply;
   }
 

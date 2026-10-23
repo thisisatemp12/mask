@@ -22,6 +22,7 @@ const fakeMask = () => {
       received.commands.push(name);
       if (name === 'DATS') reply('DATSOK');
       if (name === 'DATCP') reply('DATCPOK');
+      if (name === 'CHEC') reply('CHEC');
     },
     addEventListener: (_, l) => listeners.push(l),
     startNotifications: async () => {},

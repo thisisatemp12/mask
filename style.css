@@ -88,6 +88,8 @@ button { cursor: pointer; }
 button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 
+.card.danger { border-color: #7a3b1d; }
+
 .needs-connection.disabled { opacity: 0.5; pointer-events: none; }
 
 .tabs { display: flex; gap: 2px; margin-top: 6px; overflow-x: auto; scrollbar-width: none; }

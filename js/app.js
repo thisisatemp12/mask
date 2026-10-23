@@ -1,12 +1,12 @@
-import { Mask } from './mask.js?v=20261023183850';
-import { commands, encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023183850';
-import { PictureEditor, loadImageFile } from './picture.js?v=20261023183850';
-import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023183850';
-import { DrawingPad } from './drawing.js?v=20261023183850';
-import { SMOOTH_PATTERNS, SHAPED_PATTERNS, buildSmoothStrip, drawSmoothPreview, drawShapedVisor } from './visor.js?v=20261023183850';
-import { HYPNO_MOUTHS, PATTERNS, drawHypno, hypnoFrames } from './hypno.js?v=20261023183850';
-import { FACES, FACE_ANIMATIONS, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023183850';
-import { drawShapeGuide } from './shape.js?v=20261023183850';
+import { Mask } from './mask.js?v=20261023185432';
+import { commands, encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023185432';
+import { PictureEditor, loadImageFile } from './picture.js?v=20261023185432';
+import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023185432';
+import { DrawingPad } from './drawing.js?v=20261023185432';
+import { SMOOTH_PATTERNS, SHAPED_PATTERNS, buildSmoothStrip, drawSmoothPreview, drawShapedVisor } from './visor.js?v=20261023185432';
+import { HYPNO_MOUTHS, PATTERNS, drawHypno, hypnoFrames } from './hypno.js?v=20261023185432';
+import { FACES, FACE_ANIMATIONS, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023185432';
+import { drawShapeGuide } from './shape.js?v=20261023185432';
 
 const $ = (id) => document.getElementById(id);
 
@@ -557,6 +557,25 @@ $('exp-play').addEventListener('click', () => run(async () => {
   await mask.send(commands.textSpeed(speed), `SPEED ${speed}`);
   await mask.play(slots);
   setStatus(`Playing slots ${slots.join(',')} after SPEED ${speed}`, 'ok');
+}));
+
+$('exp-high-send').addEventListener('click', () => run(async () => {
+  if (!$('exp-high-ok').checked) throw new Error('Tick the box first to confirm you accept the risk');
+  const slot = Math.round(Number($('exp-high-slot').value));
+  if (!(slot >= 35 && slot <= 255)) throw new Error('Pick a slot from 35 to 255');
+  log('info', `Experiment: uploading test pattern to slot ${slot}`);
+  try {
+    await mask.check();
+  } catch (err) {
+    log('info', `No CHEC reply (${err.message}), carrying on`);
+  }
+  // Reuse the orientation pattern so the result is easy to recognise.
+  $('pattern').value = 'corners';
+  drawPattern();
+  await withProgress(`Uploading to slot ${slot}...`, (onProgress) => mask.uploadImage(canvasData($('pattern-canvas')), slot, onProgress));
+  await mask.play([slot]);
+  $('exp-high-ok').checked = false;
+  setStatus(`Uploaded slot ${slot} and asked the mask to show it. What does it show?`, 'ok');
 }));
 
 const builtinNumber = () => Number($('builtin-number').value) || 1;

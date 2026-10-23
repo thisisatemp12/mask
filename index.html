@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111318">
   <title>Mask Control</title>
-  <link rel="stylesheet" href="style.css?v=20261023183850">
+  <link rel="stylesheet" href="style.css?v=20261023185432">
 </head>
 <body>
   <header class="bar">
@@ -308,6 +308,21 @@
         </div>
       </div>
 
+      <div class="card danger">
+        <h2>Experiment: upload past slot 34</h2>
+        <p class="warn">Risky. The official app only uses slots 1-34. Nobody knows what a higher slot number writes over. It might be refused, overwrite a built-in picture, or in the worst case break the mask for good.</p>
+        <p class="hint">This uploads the orientation pattern to the slot you choose, then tries to show it. It stops straight away if the mask refuses. Afterwards, check that a few built-in pictures and animations still look right.</p>
+        <div class="row">
+          <label>Slot <input id="exp-high-slot" type="number" min="35" max="255" value="35"></label>
+        </div>
+        <div class="row">
+          <label><input id="exp-high-ok" type="checkbox"> I understand this could break my mask</label>
+        </div>
+        <div class="row">
+          <button id="exp-high-send" class="needs-connection">Upload to this slot</button>
+        </div>
+      </div>
+
       <div class="card">
         <h2>Built-in pictures</h2>
         <p class="hint">Images go up to about 105 and animations to about 69.</p>
@@ -368,6 +383,6 @@
     window.addEventListener('error', function (e) { showStartupError(e.message || 'script error'); });
     window.addEventListener('unhandledrejection', function (e) { showStartupError(String(e.reason)); });
   </script>
-  <script type="module" src="js/app.js?v=20261023183850"></script>
+  <script type="module" src="js/app.js?v=20261023185432"></script>
 </body>
 </html>
