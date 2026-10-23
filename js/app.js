@@ -1,8 +1,8 @@
-import { Mask } from './mask.js';
-import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js';
-import { PictureEditor, loadImageFile } from './picture.js';
-import { renderScrollingText, rainbow, drawStillText } from './text.js';
-import { drawShapeGuide } from './shape.js';
+import { Mask } from './mask.js?v=20261023180057';
+import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023180057';
+import { PictureEditor, loadImageFile } from './picture.js?v=20261023180057';
+import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023180057';
+import { drawShapeGuide } from './shape.js?v=20261023180057';
 
 const $ = (id) => document.getElementById(id);
 

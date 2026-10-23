@@ -17,6 +17,8 @@ npm test           # protocol and AES unit tests
 node tests/browser-smoke.mjs OUT_DIR   # headless Chromium run against a fake mask, with screenshots (needs Playwright and the server running)
 ```
 
+Before pushing a change to the site, run `tools/bump-version.sh` so phones load the new scripts instead of cached ones.
+
 Web Bluetooth only works on `https://` pages or `localhost`.
 
 ## Protocol

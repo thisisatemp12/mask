@@ -1,6 +1,6 @@
 // Text rendering, both for the mask's own scrolling text mode and as a still picture.
 
-import { TEXT_HEIGHT, encodeTextBitmap, encodeTextColours } from './protocol.js';
+import { TEXT_HEIGHT, encodeTextBitmap, encodeTextColours } from './protocol.js?v=20261023180057';
 
 // Long bitmaps can lock up the mask until its battery is pulled, so stay well clear.
 export const MAX_TEXT_COLUMNS = 512;
