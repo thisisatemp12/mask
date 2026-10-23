@@ -7,8 +7,8 @@
 // - Shaped: a visor drawn across the eyes as full-colour frames in slots,
 //   looped at the mask's slot rate of about one frame a second.
 
-import { TEXT_HEIGHT, encodeTextBitmap, encodeTextColours } from './protocol.js?v=20261023183425';
-import { clipToPanel } from './faces.js?v=20261023183425';
+import { TEXT_HEIGHT, encodeTextBitmap, encodeTextColours } from './protocol.js?v=20261023183850';
+import { clipToPanel } from './faces.js?v=20261023183850';
 
 export const TEXT_BAND_TOP = 21;
 
@@ -137,11 +137,16 @@ export function drawSmoothPreview(canvas, { w, h }, strip, offset) {
 // --- Shaped visor ---
 
 export const SHAPED_PATTERNS = {
+  chevronsOut: { name: '<<< >>> outward' },
+  chevronsIn: { name: '>>> <<< inward' },
   scan: { name: 'Scan line' },
   pulse: { name: 'Pulse' },
   rainbow: { name: 'Rainbow sweep' },
   sparkle: { name: 'Sparkle' },
 };
+
+const CHEVRON_TOP = 21;
+const CHEVRON_BOTTOM = 34;
 
 /** Whether (x, y) on a 46 × 58 mask is inside the visor: a wide band over the eyes with a nose notch. */
 function inVisor(x, y) {
@@ -158,7 +163,7 @@ function inVisor(x, y) {
 }
 
 /** Draw one frame of the shaped visor. `phase` runs 0-1 over the loop. */
-export function drawShapedVisor(canvas, { w, h }, { pattern, colour, grid, phase }) {
+export function drawShapedVisor(canvas, { w, h }, { pattern, colour, grid, phase, frames = 6 }) {
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d');
@@ -172,11 +177,23 @@ export function drawShapedVisor(canvas, { w, h }, { pattern, colour, grid, phase
     for (let x = 0; x < w; x++) {
       const vx = Math.floor(x / sx);
       const vy = Math.floor(y / sy);
-      if (!inVisor(vx, vy)) continue;
-      if (grid && (vx + vy) % 2) continue;
+      // Chevrons get their own band below the eye holes, where they read clearly.
+      const chevrons = pattern === 'chevronsOut' || pattern === 'chevronsIn';
+      if (chevrons ? vy < CHEVRON_TOP || vy > CHEVRON_BOTTOM : !inVisor(vx, vy)) continue;
+      if (grid && !chevrons && (vx + vy) % 2) continue;
       let level = 0.5;
       let rgb = base;
-      if (pattern === 'scan') {
+      if (chevrons) {
+        // Mirrored chevrons: '<' on the left half and '>' on the right, with
+        // their points facing outward, moving away from (or toward) the centre.
+        // Spacing equals the frame count, so each frame moves exactly one LED.
+        const spacing = Math.max(4, frames);
+        const dist = Math.abs(vx + 0.5 - 23);
+        const dy = Math.abs(vy - (CHEVRON_TOP + CHEVRON_BOTTOM) / 2);
+        const step = (pattern === 'chevronsOut' ? 1 : -1) * phase * spacing;
+        if (mod(dist + dy / 2 - step, spacing) >= Math.ceil(spacing * 0.4)) continue;
+        level = 1;
+      } else if (pattern === 'scan') {
         // A bright line sweeping left to right with a fading trail.
         const behind = mod(phase * 46 - vx, 46);
         level = Math.max(0.4, 1 - behind / 12);

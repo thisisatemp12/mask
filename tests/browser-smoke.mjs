@@ -132,6 +132,7 @@ await shot('visor-smooth');
 await page.click('#visor-smooth-send');
 await waitShowing('Showing visor');
 await page.check('input[name=visor-kind][value=shaped]');
+await page.selectOption('#visor-shaped-pattern', 'chevronsOut');
 await page.waitForTimeout(300);
 await shot('visor-shaped');
 await page.click('#visor-shaped-send');

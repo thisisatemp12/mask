@@ -1,12 +1,12 @@
-import { Mask } from './mask.js?v=20261023183425';
-import { commands, encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023183425';
-import { PictureEditor, loadImageFile } from './picture.js?v=20261023183425';
-import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023183425';
-import { DrawingPad } from './drawing.js?v=20261023183425';
-import { SMOOTH_PATTERNS, SHAPED_PATTERNS, buildSmoothStrip, drawSmoothPreview, drawShapedVisor } from './visor.js?v=20261023183425';
-import { HYPNO_MOUTHS, PATTERNS, drawHypno, hypnoFrames } from './hypno.js?v=20261023183425';
-import { FACES, FACE_ANIMATIONS, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023183425';
-import { drawShapeGuide } from './shape.js?v=20261023183425';
+import { Mask } from './mask.js?v=20261023183850';
+import { commands, encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023183850';
+import { PictureEditor, loadImageFile } from './picture.js?v=20261023183850';
+import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023183850';
+import { DrawingPad } from './drawing.js?v=20261023183850';
+import { SMOOTH_PATTERNS, SHAPED_PATTERNS, buildSmoothStrip, drawSmoothPreview, drawShapedVisor } from './visor.js?v=20261023183850';
+import { HYPNO_MOUTHS, PATTERNS, drawHypno, hypnoFrames } from './hypno.js?v=20261023183850';
+import { FACES, FACE_ANIMATIONS, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023183850';
+import { drawShapeGuide } from './shape.js?v=20261023183850';
 
 const $ = (id) => document.getElementById(id);
 
@@ -457,6 +457,7 @@ const shapedOptions = (phase) => ({
   pattern: $('visor-shaped-pattern').value,
   colour: $('visor-shaped-colour').value,
   grid: $('visor-grid').checked,
+  frames: visorFrameCount(),
   phase,
 });
 
