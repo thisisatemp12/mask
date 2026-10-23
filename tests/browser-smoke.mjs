@@ -109,6 +109,20 @@ await shot('draw');
 await page.click('#draw-send');
 await waitShowing('Showing slot 3');
 
+// Animated face and hypno eyes.
+await page.click('[data-tab=faces]');
+await page.selectOption('#face-anim', 'blink');
+await page.fill('#face-slot', '10');
+await page.click('#face-send');
+await waitShowing('Playing slots 10-11');
+await page.click('[data-tab=hypno]');
+await page.selectOption('#hypno-pattern', 'rainbow');
+await page.selectOption('#hypno-mouth', 'grin');
+await page.waitForTimeout(1100);
+await shot('hypno');
+await page.click('#hypno-send');
+await waitShowing('Playing slots 20-25');
+
 // Test pattern.
 await page.click('[data-tab=test]');
 await page.selectOption('#pattern', 'corners');
@@ -140,5 +154,6 @@ errors.push(...faceProblems);
 const state = await page.evaluate(() => window.__fakeMask);
 console.log(JSON.stringify({ state, errors, log: await page.textContent('#log') }, null, 1));
 await browser.close();
-const expected = 'DATS,DATCP,PLAY,DATS,DATCP,FC,BC,SPEED,MODE,DATS,DATCP,PLAY,DATS,DATCP,PLAY,DATS,DATCP,PLAY,DATS,DATCP,PLAY';
+const expected = ['DATS,DATCP,PLAY,DATS,DATCP,FC,BC,SPEED,MODE,DATS,DATCP,PLAY,DATS,DATCP,PLAY,DATS,DATCP,PLAY',
+  'DATS,DATCP,'.repeat(2) + 'PLAY', 'DATS,DATCP,'.repeat(6) + 'PLAY', 'DATS,DATCP,PLAY'].join();
 if (errors.length || state.commands.join() !== expected) process.exit(1);

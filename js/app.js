@@ -1,10 +1,11 @@
-import { Mask } from './mask.js?v=20261023181959';
-import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023181959';
-import { PictureEditor, loadImageFile } from './picture.js?v=20261023181959';
-import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023181959';
-import { DrawingPad } from './drawing.js?v=20261023181959';
-import { FACES, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023181959';
-import { drawShapeGuide } from './shape.js?v=20261023181959';
+import { Mask } from './mask.js?v=20261023182506';
+import { encodeImage, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './protocol.js?v=20261023182506';
+import { PictureEditor, loadImageFile } from './picture.js?v=20261023182506';
+import { renderScrollingText, rainbow, drawStillText } from './text.js?v=20261023182506';
+import { DrawingPad } from './drawing.js?v=20261023182506';
+import { HYPNO_MOUTHS, PATTERNS, drawHypno, hypnoFrames } from './hypno.js?v=20261023182506';
+import { FACES, FACE_ANIMATIONS, drawFace, EYE_TOP_MIN, EYE_TOP_MAX, EYE_TOP_DEFAULT } from './faces.js?v=20261023182506';
+import { drawShapeGuide } from './shape.js?v=20261023182506';
 
 const $ = (id) => document.getElementById(id);
 
@@ -138,6 +139,32 @@ async function sendCanvas(canvas, slot) {
   await mask.play([slot]);
   setStatus(`Showing slot ${slot}`, 'ok');
 }
+
+function canvasData(canvas) {
+  const { w, h } = size();
+  return encodeImage(canvas.getContext('2d').getImageData(0, 0, w, h).data, w, h);
+}
+
+/** Upload animation frames (canvases) into slots from `baseSlot` and loop them in `order`. */
+async function sendAnimation(canvases, order, baseSlot) {
+  const frames = canvases.map(canvasData);
+  const last = baseSlot + frames.length - 1;
+  await withProgress(`Uploading ${frames.length} frames...`, (onProgress) => mask.uploadAnimation(frames, order, baseSlot, (p, i) => {
+    onProgress(p);
+    setStatus(`Uploading frame ${i + 1} of ${frames.length} (slots ${baseSlot}-${last})...`);
+  }));
+  setStatus(`Playing slots ${baseSlot}-${last}`, 'ok');
+}
+
+const slotRange = (base, count) => (count === 1 ? `slot ${base}` : `slots ${base}-${base + count - 1}`);
+
+// One shared clock for animated previews, at the mask's own rate of about one frame a second.
+let tick = 0;
+const previewers = [];
+setInterval(() => {
+  tick++;
+  for (const draw of previewers) draw();
+}, 1000);
 
 /** Run an upload with the shared progress bar, locking the send buttons meanwhile. */
 async function withProgress(message, upload) {
@@ -293,11 +320,34 @@ $('draw-send').addEventListener('click', () => run(() => sendCanvas($('draw-canv
 let selectedFace = FACES[0];
 const faceCanvas = $('face-canvas');
 const thumbs = [];
-// The slider runs top to bottom of the mask; the input's value is the eye band's top row.
+// The slider's value is the eye band's top row on a 58-row mask.
 const eyeTop = () => Number($('face-eyes').value);
 
+for (const [key, anim] of Object.entries(FACE_ANIMATIONS)) {
+  $('face-anim').append(new Option(anim.name, key));
+}
+
+/** The selected animation as frame variants plus play order (a still face is one frame). */
+function faceAnimation() {
+  const key = $('face-anim').value;
+  return key ? FACE_ANIMATIONS[key].build(selectedFace) : { frames: [{}], order: [0] };
+}
+
+function drawFacePreview() {
+  const { frames, order } = faceAnimation();
+  drawFace(faceCanvas, selectedFace, size(), eyeTop(), frames[order[tick % order.length]]);
+}
+previewers.push(drawFacePreview);
+
+function updateFaceHint() {
+  const { frames } = faceAnimation();
+  $('face-slot-hint').hidden = frames.length === 1;
+  $('face-slot-hint').textContent = `This animation has ${frames.length} frames, so it uses ${slotRange(slotFrom('face-slot'), frames.length)}.`;
+}
+
 function drawFaces() {
-  drawFace(faceCanvas, selectedFace, size(), eyeTop());
+  drawFacePreview();
+  updateFaceHint();
   for (const { thumb, face } of thumbs) {
     drawFace(thumb, face, { w: DEFAULT_WIDTH, h: DEFAULT_HEIGHT }, eyeTop());
     const guide = document.createElement('canvas');
@@ -316,7 +366,8 @@ for (const face of FACES) {
   b.addEventListener('click', () => {
     selectedFace = face;
     for (const other of document.querySelectorAll('.face')) other.setAttribute('aria-pressed', other === b);
-    drawFace(faceCanvas, selectedFace, size(), eyeTop());
+    drawFacePreview();
+    updateFaceHint();
   });
   $('face-grid').append(b);
 }
@@ -327,10 +378,18 @@ $('face-eyes').value = EYE_TOP_DEFAULT;
 $('face-eyes').addEventListener('input', drawFaces);
 $('face-eyes-above').addEventListener('click', () => { $('face-eyes').value = 6; drawFaces(); });
 $('face-eyes-below').addEventListener('click', () => { $('face-eyes').value = EYE_TOP_DEFAULT; drawFaces(); });
+$('face-anim').addEventListener('change', () => { drawFacePreview(); updateFaceHint(); });
+$('face-slot').addEventListener('input', updateFaceHint);
 
 $('face-send').addEventListener('click', () => run(async () => {
-  drawFace(faceCanvas, selectedFace, size(), eyeTop());
-  await sendCanvas(faceCanvas, slotFrom('face-slot'));
+  const { frames, order } = faceAnimation();
+  const canvases = frames.map((variant) => {
+    const c = document.createElement('canvas');
+    drawFace(c, selectedFace, size(), eyeTop(), variant);
+    return c;
+  });
+  if (canvases.length === 1) await sendCanvas(canvases[0], slotFrom('face-slot'));
+  else await sendAnimation(canvases, order, slotFrom('face-slot'));
 }));
 
 $('face-edit').addEventListener('click', () => {
@@ -338,6 +397,46 @@ $('face-edit').addEventListener('click', () => {
   pad.copyFrom(faceCanvas);
   showTab('draw');
 });
+
+// --- Hypno ---
+
+for (const [key, p] of Object.entries(PATTERNS)) $('hypno-pattern').append(new Option(p.name, key));
+for (const [key, name] of Object.entries(HYPNO_MOUTHS)) $('hypno-mouth').append(new Option(name, key));
+
+function hypnoOptions(phase) {
+  return {
+    pattern: $('hypno-pattern').value,
+    colour: $('hypno-colour').value,
+    mouth: $('hypno-mouth').value,
+    counter: $('hypno-counter').checked,
+    radius: Number($('hypno-size').value),
+    eyeCentre: Number($('hypno-height').value),
+    phase,
+  };
+}
+
+const hypnoFrameCount = () => Number($('hypno-frames').value);
+
+function drawHypnoPreview() {
+  const phases = hypnoFrames(hypnoFrameCount());
+  drawHypno($('hypno-canvas'), size(), hypnoOptions(phases[tick % phases.length]));
+  $('hypno-slot-hint').textContent = `${phases.length} frames, using ${slotRange(slotFrom('hypno-slot'), phases.length)}.`;
+}
+previewers.push(drawHypnoPreview);
+
+for (const id of ['hypno-pattern', 'hypno-colour', 'hypno-mouth', 'hypno-counter', 'hypno-size', 'hypno-height', 'hypno-frames', 'hypno-slot']) {
+  $(id).addEventListener('input', drawHypnoPreview);
+}
+
+$('hypno-send').addEventListener('click', () => run(async () => {
+  const phases = hypnoFrames(hypnoFrameCount());
+  const canvases = phases.map((phase) => {
+    const c = document.createElement('canvas');
+    drawHypno(c, size(), hypnoOptions(phase));
+    return c;
+  });
+  await sendAnimation(canvases, phases.map((_, i) => i), slotFrom('hypno-slot'));
+}));
 
 // --- Test ---
 
@@ -390,7 +489,7 @@ function drawPattern() {
 
 for (const id of ['pattern', 'colour']) $(id).addEventListener('input', drawPattern);
 for (const id of ['width', 'height']) {
-  $(id).addEventListener('input', () => { drawGuides(); editor.draw(); pad.resize(); drawText(); drawPattern(); drawFaces(); });
+  $(id).addEventListener('input', () => { drawGuides(); editor.draw(); pad.resize(); drawText(); drawPattern(); drawFaces(); drawHypnoPreview(); });
 }
 
 $('pattern-send').addEventListener('click', () => run(() => sendCanvas($('pattern-canvas'), slotFrom('pattern-slot'))));
@@ -402,4 +501,5 @@ editor.draw();
 drawText();
 drawPattern();
 drawFaces();
+drawHypnoPreview();
 log('info', `Ready. Web Bluetooth ${navigator.bluetooth ? 'available' : 'NOT available'}.`);

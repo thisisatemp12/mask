@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111318">
   <title>Mask Control</title>
-  <link rel="stylesheet" href="style.css?v=20261023181959">
+  <link rel="stylesheet" href="style.css?v=20261023182506">
 </head>
 <body>
   <header class="bar">
@@ -27,6 +27,7 @@
       <button role="tab" data-tab="text">Text</button>
       <button role="tab" data-tab="draw">Draw</button>
       <button role="tab" data-tab="faces">Faces</button>
+      <button role="tab" data-tab="hypno">Hypno</button>
       <button role="tab" data-tab="test">Test</button>
     </nav>
   </header>
@@ -174,12 +175,46 @@
           <button id="face-eyes-above">Above holes</button>
           <button id="face-eyes-below">Below holes</button>
         </div>
+        <div class="row">
+          <label>Animation
+            <select id="face-anim"><option value="">Still</option></select>
+          </label>
+        </div>
         <div id="face-grid" class="face-grid"></div>
+        <p id="face-slot-hint" class="hint" hidden></p>
         <div class="row">
           <label>Slot <input id="face-slot" type="number" min="1" max="34" value="4"></label>
           <button id="face-send" class="primary needs-connection">Send to mask</button>
           <button id="face-edit">Edit in Draw</button>
         </div>
+      </div>
+    </section>
+
+    <!-- Hypno -->
+    <section id="tab-hypno" class="tab-panel" hidden>
+      <div class="card">
+        <div class="preview-wrap">
+          <canvas id="hypno-canvas" class="mask-preview"></canvas>
+        </div>
+        <div class="row">
+          <label>Pattern <select id="hypno-pattern"></select></label>
+          <input id="hypno-colour" type="color" value="#3cf2ff" aria-label="Colour">
+        </div>
+        <div class="row">
+          <label>Mouth <select id="hypno-mouth"></select></label>
+          <label><input id="hypno-counter" type="checkbox" checked> Mirror spin</label>
+        </div>
+        <div class="sliders">
+          <label>Eye size <input id="hypno-size" type="range" min="4" max="10" step="0.5" value="7"></label>
+          <label>Eye height <input id="hypno-height" type="range" min="8" max="34" value="28"></label>
+          <label>Frames <input id="hypno-frames" type="range" min="3" max="10" value="6"></label>
+        </div>
+        <p id="hypno-slot-hint" class="hint"></p>
+        <div class="row">
+          <label>Slot <input id="hypno-slot" type="number" min="1" max="34" value="20"></label>
+          <button id="hypno-send" class="primary needs-connection">Send to mask</button>
+        </div>
+        <p class="hint">The preview plays at the mask's speed, about one frame per second. Uploading takes a few seconds per frame, then it loops on the mask by itself.</p>
       </div>
     </section>
 
@@ -254,6 +289,6 @@
     window.addEventListener('error', function (e) { showStartupError(e.message || 'script error'); });
     window.addEventListener('unhandledrejection', function (e) { showStartupError(String(e.reason)); });
   </script>
-  <script type="module" src="js/app.js?v=20261023181959"></script>
+  <script type="module" src="js/app.js?v=20261023182506"></script>
 </body>
 </html>

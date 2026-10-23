@@ -9,6 +9,8 @@ A web app for controlling a Shining Mask LED mask over Bluetooth from Chrome on 
   background), or text drawn as a still picture.
 - **Draw:** pen, eraser, fill, brush sizes, colours, undo; draw first, then send.
 - **Faces:** ready-made hacker-style LED faces to send as they are or edit in Draw.
+- **Faces** can also be animated (blink, look around, talk, glitch, pulse): frames go into consecutive slots and loop on the mask.
+- **Hypno:** spiral, rainbow spiral, red and black, rings, pinwheel and vortex eyes, with or without a mouth, uploaded as a looping animation.
 - **Test:** show an uploaded slot, the built-in pictures, and test patterns.
 
 ## Running locally

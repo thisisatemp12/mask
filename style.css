@@ -93,7 +93,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .tabs { display: flex; gap: 4px; margin-top: 6px; }
 .tabs button {
   flex: 1;
-  padding: 10px 4px;
+  padding: 10px 2px;
+  font-size: 0.85rem;
   border: none;
   border-radius: 0;
   background: none;

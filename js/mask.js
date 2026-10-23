@@ -3,7 +3,7 @@
 import {
   SERVICE, CMD_CHAR, NOTIFY_CHAR, UPLOAD_CHAR,
   commands, encrypt, decrypt, splitIntoPackets, replyName, toHex,
-} from './protocol.js?v=20261023181959';
+} from './protocol.js?v=20261023182506';
 
 const REPLY_TIMEOUT_MS = 5000;
 
@@ -152,6 +152,21 @@ export class Mask {
    */
   uploadImage(data, slot, onProgress) {
     return this.upload(commands.startUpload(data.length, slot), `DATS ${data.length} bytes, slot ${slot}`, data, onProgress);
+  }
+
+  /**
+   * Upload animation frames into consecutive slots starting at `baseSlot`,
+   * then loop them on the mask in `order` (indexes into frames, at most 10).
+   */
+  async uploadAnimation(frames, order, baseSlot, onProgress = () => {}) {
+    if (order.length > 10) throw new Error('The mask can only loop up to 10 frames');
+    if (baseSlot + frames.length - 1 > 34) {
+      throw new Error(`This needs ${frames.length} slots, so start at slot ${35 - frames.length} or lower`);
+    }
+    for (let i = 0; i < frames.length; i++) {
+      await this.uploadImage(frames[i], baseSlot + i, (p) => onProgress((i + p) / frames.length, i));
+    }
+    await this.play(order.map((i) => baseSlot + i));
   }
 
   /** Upload a text bitmap and its colour array for the mask's own text mode. */
